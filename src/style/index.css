@@ -1,0 +1,20 @@
+html,
+body,
+#app,
+#cesiumContainer {
+  width: 100%;
+  height: 100%;
+}
+
+#cesiumContainer .cesium-widget-credits {
+  display: none;
+}
+
+#cesiumInfo {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  z-index: 999;
+  color: #fff;
+  font-size: 14px;
+}

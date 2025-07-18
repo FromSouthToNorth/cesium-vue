@@ -1,6 +1,8 @@
 <template>
   <div class="compass-control">
-    <img ref="compass" src="@/assets/svg/compass.svg" alt="Compass" class="compass-icon" @click="toggleSliders" />
+    <button>
+      <img ref="compass" src="@/assets/svg/compass.svg" alt="Compass" class="compass-icon" @click="toggleSliders" />
+    </button>
     <div v-if="showSliders" class="sliders">
       <div class="slider-group">
         <label>倾斜度 (Pitch): {{ pitch }}°</label>
@@ -34,8 +36,8 @@ function toggleSliders() {
 
 function setPitchHeading() {
   const { camera } = toRaw(unref(viewer))
-  pitch.value = CesiumMath.toDegrees(camera.pitch).toFixed(2);
-  heading.value = CesiumMath.toDegrees(camera.heading).toFixed(2);
+  pitch.value = Math.round(CesiumMath.toDegrees(camera.pitch));
+  heading.value = Math.round(CesiumMath.toDegrees(camera.heading));
 }
 
 watch(viewer, () => {
@@ -84,14 +86,14 @@ function setCompassRotate() {
 }
 
 .compass-icon {
-  width: 50px;
-  height: 50px;
+  width: 26px;
+  height: 32px;
   cursor: pointer;
   transform: rotate(360deg);
 }
 
 .sliders {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.8);
   padding: 10px;
   border-radius: 5px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
@@ -106,21 +108,26 @@ function setCompassRotate() {
   margin-bottom: 5px;
 }
 
+.compass-control button {
+  background-color: rgba(250, 250, 250, 0.8);
+  border: none;
+  border-radius: 50%;
+}
+
 .slider-group input {
   width: 200px;
 }
 
-button {
+.sliders button {
   width: 100%;
   padding: 5px;
-  background-color: #0078d7;
-  color: white;
+  color: #0050b3;
   border: none;
-  border-radius: 3px;
+  border-radius: 12px;
   cursor: pointer;
 }
 
-button:hover {
-  background-color: #005ba1;
+.sliders button:hover {
+  background-color: #d9d9d9;
 }
 </style>

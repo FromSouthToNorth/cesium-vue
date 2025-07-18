@@ -36,10 +36,11 @@ watch(
   viewer,
   () => {
     getCesiumInfo()
-    toRaw(unref(viewer)).camera.moveStart.addEventListener(() => {
+    const { camera } = toRaw(unref(viewer))
+    camera.moveStart.addEventListener(() => {
       showInfo.value = false
     });
-    toRaw(unref(viewer)).camera.moveEnd.addEventListener(() => {
+    camera.moveEnd.addEventListener(() => {
       getCesiumInfo()
       showInfo.value = true
     });
@@ -62,9 +63,9 @@ function getCesiumInfo() {
 <style scoped>
 #cesiumInfo {
   position: absolute;
-  padding: 10px;
-  bottom: 10px;
-  left: 10px;
+  padding: 2px;
+  bottom: 2px;
+  left: 2px;
   z-index: 999;
   color: #d9d9d9;
   font-size: 14px;

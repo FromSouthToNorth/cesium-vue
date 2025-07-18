@@ -34,7 +34,6 @@ onMounted(() => {
       duration: 3 // 飞行时间（秒）
     });
   }
-
   viewer.homeButton.viewModel.command.afterExecute.addEventListener(() => flyTo());
 })
 

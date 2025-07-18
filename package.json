@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@turf/turf": "^7.2.0",
     "cesium": "^1.131.0",
     "lodash-es": "^4.17.21",
     "pinia": "^3.0.3",

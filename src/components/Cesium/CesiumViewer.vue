@@ -7,7 +7,7 @@
 
 <script setup>
 import { onMounted, ref } from 'vue';
-import { Viewer, Ion, Cartesian3, Math as CesiumMath, Color as CesiumColor, ScreenSpaceEventType, defined, ScreenSpaceEventHandler, PolylineDashMaterialProperty } from 'cesium';
+import { Viewer, Ion, Cartesian3, Math as CesiumMath, Color as CesiumColor, ScreenSpaceEventType, Cartographic, BoundingSphere, HeightReference, defined, ScreenSpaceEventHandler, PolylineDashMaterialProperty } from 'cesium';
 import { useCesiumStore } from '@/stores/modules/cesiumStore';
 import Info from './info/index.vue';
 import Control from './control/index.vue';
@@ -36,8 +36,8 @@ onMounted(() => {
   }
   const polygons = [
     {
-      id: 1,
-      name: "polygon_1",
+      id: "Polygon_1",
+      name: "Polygon_1",
       positions: Cartesian3.fromDegreesArray([
         104.118261187851, 30.65254722059734,
         104.12262045270334, 30.64993982296653,
@@ -47,7 +47,7 @@ onMounted(() => {
       ]),
     },
     {
-      id: 2,
+      id: "Polygon_2",
       name: "polygon_2",
       positions: Cartesian3.fromDegreesArray([
         104.12182443934438, 30.643716913636933,
@@ -58,7 +58,29 @@ onMounted(() => {
       ]),
     }
   ]
+  const points = [
+    { lon: 104.06146224184954, lat: 30.66075589926439, name: "Point_1", id: "Point_1" },
+    { lon: 104.06391288134151, lat: 30.660752913305988, name: "Point_2", id: "Point_2" },
+    { lon: 104.06166459432066, lat: 30.660781966602045, name: "Point_3", id: "Point_3" },
+  ];
+
   const handler = new ScreenSpaceEventHandler(viewer.scene.canvas);
+
+  points.forEach(point => {
+    viewer.entities.add({
+      name: point.name,
+      position: Cartesian3.fromDegrees(point.lon, point.lat),
+      point: {
+        pixelSize: 10,
+        color: CesiumColor.RED,
+        heightReference: HeightReference.CLAMP_TO_GROUND
+      }
+    });
+  })
+
+  // 存储多边形中心点
+  const centers = [];
+
   const polygonEntities = polygons.map(e => {
     return viewer.entities.add({
       name: e.name,
@@ -121,7 +143,5 @@ onMounted(() => {
 
   viewer.homeButton.viewModel.command.afterExecute.addEventListener(() => flyTo());
 })
-
-
 
 </script>

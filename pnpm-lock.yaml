@@ -11,6 +11,9 @@ importers:
       cesium:
         specifier: ^1.131.0
         version: 1.131.0
+      lodash-es:
+        specifier: ^4.17.21
+        version: 4.17.21
       pinia:
         specifier: ^3.0.3
         version: 3.0.3(vue@3.5.17)
@@ -567,6 +570,9 @@ packages:
 
   lerc@2.0.0:
     resolution: {integrity: sha512-7qo1Mq8ZNmaR4USHHm615nEW2lPeeWJ3bTyoqFbd35DLx0LUH7C6ptt5FDCTAlbIzs3+WKrk5SkJvw8AFDE2hg==}
+
+  lodash-es@4.17.21:
+    resolution: {integrity: sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==}
 
   long@5.3.2:
     resolution: {integrity: sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==}
@@ -1229,6 +1235,8 @@ snapshots:
   ktx-parse@1.0.1: {}
 
   lerc@2.0.0: {}
+
+  lodash-es@4.17.21: {}
 
   long@5.3.2: {}
 

@@ -5,7 +5,5 @@ export function getCentroid(geojson) {
 }
 
 export function getCenterOfMass(geojson) {
-  console.log(centerOfMass);
-
   return centerOfMass(geojson)
 }

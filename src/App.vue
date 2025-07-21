@@ -1,9 +1,8 @@
 <script setup>
-import CesiumViewer from './components/Cesium/CesiumViewer.vue'
 </script>
 
 <template>
-  <CesiumViewer />
+  <RouterView />
 </template>
 
 <style scoped></style>

@@ -109,8 +109,10 @@ const setPathData = (pointStart, pointEnd, options = {}) => {
   // 提取起点和终点的经纬度
   const startLon = pointStart[0];
   const startLat = pointStart[1];
+  const startHeight = pointStart[2];
   const endLon = pointEnd[0];
   const endLat = pointEnd[1];
+  const endHeight = pointEnd[2];
 
   // 预分配数组（每个点有经度、纬度、高度共 3 个值）
   const positionsArray = new Array(pointsCount * 3);

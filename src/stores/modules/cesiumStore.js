@@ -5,7 +5,7 @@ export const useCesiumStore = defineStore('cesium', {
     viewer: null,
   }),
   actions: {
-    async setViewer(viewer) {
+    setViewer(viewer) {
       console.log('setViewer', viewer);
       this.viewer = viewer
     },

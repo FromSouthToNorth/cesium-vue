@@ -13,7 +13,9 @@ import {
   VertexFormat,
   JulianDate,
   Cartographic,
-  sampleTerrainMostDetailed
+  sampleTerrainMostDetailed,
+  Polyline as CesiumPolyline,
+  CustomShader
 } from 'cesium'
 
 import { useCesium } from '@/hooks/cesium/useCesium';
@@ -100,9 +102,6 @@ export function addParabolaToScene(viewer, startPoint, endPoint, options = {}, t
       })
     );
   })
-
-
-
 };
 
 /**
@@ -161,7 +160,7 @@ const setPathData = (pointStart, pointEnd, options, terrainProvider) => {
 /**
  * 创建流动线材质
  */
-const createFlowingLineMaterial = () => {
+export const createFlowingLineMaterial = () => {
   // GLSL 代码
   const flowingLineGLSL = `
     float SPEED_STEP = 0.01; // 增加速度步长，使光线移动更快
@@ -340,3 +339,48 @@ export function getDistance(basePos, targetPos) {
 
   return { distance, baseCoords, targetCoords };
 }
+export const flowLineMaterial = new CustomShader({
+  defines: {
+    u_time: '0.0', // 添加 u_time 宏定义
+    u_textureScale: '1.0', // 添加纹理缩放宏定义
+  },
+  fabric: {
+    uniforms: {
+      u_image: "{Link: Cesium.js.org https://cesium.com/learn/cesiumjs/ref-doc/Color.html}", // 图片
+      u_time: 0.0, // 时间
+      u_textureScale: 1.0, // 纹理缩放
+    },
+    vertexShader: `
+            void main() {
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+    fragmentShader: `
+            uniform sampler2D u_image;
+            uniform float u_time;
+            uniform float u_textureScale;
+            void main() {
+                vec2 uv = gl_FragCoord.xy / vec2(u_imageSize); // 获取 UV 坐标
+                // 根据 u_time 和 u_textureScale 调整 UV 坐标，实现流动效果
+                uv.s = fract(uv.s - u_time * 0.1 * u_textureScale); // 调整 s 坐标，实现水平流动
+                // uv.t = fract(uv.t - u_time * 0.1); //  调整 t 坐标，实现垂直流动
+                vec4 color = texture2D(u_image, uv);
+                gl_FragColor = color;
+            }
+        `,
+  },
+  source: `
+        uniform sampler2D u_image;
+        uniform float u_time;
+        uniform float u_textureScale;
+        void main() {
+            vec2 uv = gl_FragCoord.xy / vec2(u_imageSize); // 获取 UV 坐标
+             // 根据 u_time 和 u_textureScale 调整 UV 坐标，实现流动效果
+            uv.s = fract(uv.s - u_time * 0.1 * u_textureScale); // 调整 s 坐标，实现水平流动
+            // uv.t = fract(uv.t - u_time * 0.1); //  调整 t 坐标，实现垂直流动
+            vec4 color = texture2D(u_image, uv);
+             // 设置颜色，可以根据需要调整
+             gl_FragColor = color;
+        }
+    `
+});

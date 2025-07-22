@@ -17,13 +17,22 @@ import {
   GeoJsonDataSource,
   Terrain,
   createOsmBuildingsAsync,
+  Cartesian3,
+  HeadingPitchRoll,
+  Math as CesiumMath,
+  Transforms,
+  Ellipsoid,
+  Model as CesiumModel,
+  IonResource,
+  HeightReference,
 } from 'cesium';
 import { randomPolygon, randomPoint } from '@turf/turf'
 import { getCenterOfMass } from '@/utils/geo'
-import { addParabolaToScene, cesiumFlyTo, entityToGeoJSON, getDistance } from '@/utils/cesium';
+import { addParabolaToScene, cesiumFlyTo } from '@/utils/cesium';
 import { useCesiumStore } from '@/stores/modules/cesiumStore';
 import Info from './info/index.vue';
 import Control from './control/index.vue';
+
 const cesiumStore = useCesiumStore()
 
 const pointGeoJSON = {
@@ -50,6 +59,23 @@ onMounted(() => {
     // geocoder: IonGeocodeProviderType.GOOGLE, // 使用 Google 地理编码器
   });
 
+  const position = Cartesian3.fromDegrees(104.0633, 30.6597);
+
+  // 定义模型位置（经度，纬度，高度）
+  // 设置朝向（航向、俯仰、滚转）
+  const headingPitchRoll = new HeadingPitchRoll(CesiumMath.toRadians(135), 0, 0);
+
+
+  const resource = IonResource.fromAssetId(3565717).then(e => {
+    viewer.entities.add({
+      model: {
+        uri: e,
+        minimumPixelSize: 14,
+        maximumScale: 200,
+      },
+      position
+    });
+  })
   const tileset = createOsmBuildingsAsync().then((layer) => {
     viewer.scene.primitives.add(layer)
   })

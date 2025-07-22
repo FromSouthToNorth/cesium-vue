@@ -15,15 +15,8 @@ import {
   defined,
   ScreenSpaceEventHandler,
   GeoJsonDataSource,
-  JulianDate,
   Terrain,
-  HeightReference,
-  Cartographic,
-  Math as CesiumMath,
-  sampleTerrainMostDetailed,
-  PolygonHierarchy,
-  Cartesian3,
-  CesiumTerrainProvider
+  createOsmBuildingsAsync,
 } from 'cesium';
 import { randomPolygon, randomPoint } from '@turf/turf'
 import { getCenterOfMass } from '@/utils/geo'
@@ -49,140 +42,189 @@ onMounted(() => {
     infoBox: false,
     timeline: false,
     animation: false,
-    // terrain: Terrain.fromWorldTerrain(),
+    terrain: Terrain.fromWorldTerrain({
+      requestWaterMask: true, // 启用水面效果
+      // requestVertexNormals: true // 启用地形法线以支持光照
+    }),
     // globe: false, // 关闭默认地球
     // geocoder: IonGeocodeProviderType.GOOGLE, // 使用 Google 地理编码器
   });
 
-  const ranPolygon = randomPolygon(20, { bbox: [103.980875, 30.6263909, 104.1456699, 30.6936521], num_vertices: 4, max_radial_length: 0.006 })
-  const ranPoint = randomPoint(20, { bbox: [103.980875, 30.6263909, 104.1456699, 30.6936521] })
-
-  CesiumTerrainProvider.fromIonAssetId(1, {
-    requestVertexNormals: true,
-    requestWaterMask: true
-  }).then(e => {
-    viewer.terrainProvider = e
-    console.log('CesiumTerrainProvider: ', e);
+  const tileset = createOsmBuildingsAsync().then((layer) => {
+    viewer.scene.primitives.add(layer)
   })
+  // 启用调试模式以查看性能
+  viewer.scene.debugShowFramesPerSecond = true;
+  cesiumStore.setViewer(viewer)
 
+  const ranPolygon = randomPolygon(15, { bbox: [103.980875, 30.6263909, 104.1456699, 30.6936521], num_vertices: 4, max_radial_length: 0.006 })
+  const ranPoint = randomPoint(20, { bbox: [103.980875, 30.6263909, 104.1456699, 30.6936521] })
   const features = ranPolygon.features.map(item => {
     return getCenterOfMass(item)
   })
-
   const pointGeoJSONs = {
-    features,
-    type: "FeatureCollection"
+    type: "FeatureCollection",
+    features
   }
 
-  GeoJsonDataSource.load(ranPolygon, {
-    // 设置高度参考为地面
-    heightReference: HeightReference.CLAMP_TO_GROUND,
-    stroke: CesiumColor.BLUE, // 折线和多边形边框颜色
-    fill: CesiumColor.YELLOW.withAlpha(0.5), // 多边形填充颜色
-    strokeWidth: 3,
-    markerSize: 20, // 点大小
-    markerSymbol: 'circle', // 点符号
-    markerColor: CesiumColor.RED // 点颜色
-  }).then((dataSource) => {
-    // 将数据源添加到 Viewer
-    viewer.dataSources.add(dataSource).then((data) => {
-      data.entities.values.forEach(entity => {
-        entity.polygon.extrudedHeight = 200
+  const terrain = Terrain.fromWorldTerrain();
+  viewer.scene.setTerrain(terrain)
+  console.log(viewer.scene);
+
+  terrain.readyEvent.addEventListener((res) => {
+    console.log('地形加载完成！', res);
+    GeoJsonDataSource.load(pointGeoJSON, {
+      clampToGround: true, // 贴合地形
+      markerSize: 50,
+      markerSymbol: 'circle',
+      markerColor: CesiumColor.RED
+    }).then((dataSource) => {
+      viewer.dataSources.add(dataSource).then(data => {
+        console.log(data.entities.values[0].position.getValue());
+        console.log('pointGeoJSONs: ', pointGeoJSONs.features);
+        pointGeoJSONs.features.forEach(item => {
+          addParabolaToScene(viewer, pointGeoJSON.geometry.coordinates, item.geometry.coordinates, { height: 300 }, res)
+        })
+      })
+    })
+    GeoJsonDataSource.load(pointGeoJSONs, {
+      clampToGround: true, // 贴合地形
+      stroke: CesiumColor.BLUE, // 折线和多边形边框颜色
+      fill: CesiumColor.YELLOW.withAlpha(0.5), // 多边形填充颜色
+      strokeWidth: 3,
+      markerSize: 20, // 点大小
+      markerSymbol: 'circle', // 点符号
+      markerColor: CesiumColor.RED // 点颜色
+    }).then((dataSource) => {
+      viewer.dataSources.add(dataSource).then(data => {
+        // console.log(data.entities.values);
+      })
+    })
+    GeoJsonDataSource.load(ranPolygon, {
+      clampToGround: true, // 贴合地形
+      stroke: CesiumColor.BLUE, // 折线和多边形边框颜色
+      fill: CesiumColor.YELLOW.withAlpha(0.5), // 多边形填充颜色
+      strokeWidth: 3,
+    }).then((dataSource) => {
+      // 将数据源添加到 Viewer
+      viewer.dataSources.add(dataSource).then((data) => {
+        viewer.zoomTo(data.entities.values);
       })
     })
   })
+  terrain.errorEvent.addEventListener((error) => {
+    console.log('获取地形失败: ', error);
+  })
 
-  // 加载 GeoJSON 数据
-  async function loadGeoJson(url, options) {
-    try {
-      const dataSource = await GeoJsonDataSource.load(url, options);
-      await viewer.dataSources.add(dataSource);
-      return dataSource;
-    } catch (error) {
-      console.error(`加载 GeoJSON 文件 ${url} 失败:`, error);
-      throw error;
-    }
-  }
+  // GeoJsonDataSource.load(ranPolygon, {
+  //   // 设置高度参考为地面
+  //   heightReference: HeightReference.CLAMP_TO_GROUND,
+  //   stroke: CesiumColor.BLUE, // 折线和多边形边框颜色
+  //   fill: CesiumColor.YELLOW.withAlpha(0.5), // 多边形填充颜色
+  //   strokeWidth: 3,
+  //   markerSize: 20, // 点大小
+  //   markerSymbol: 'circle', // 点符号
+  //   markerColor: CesiumColor.RED // 点颜色
+  // }).then((dataSource) => {
+  //   // 将数据源添加到 Viewer
+  //   viewer.dataSources.add(dataSource).then((data) => {
+  //     console.log(data.entities.values);
+  //     // .forEach(entity => {
+  //     //   entity.polygon.extrudedHeight = 200
+  //     // })
+  //   })
+  // })
 
-  // 获取实体位置（支持点和其他类型）
-  function getEntityPosition(entity, time = JulianDate.now()) {
-    if (!entity) return null;
-    if (entity.position) {
-      return entity.position.getValue(time);
-    }
-    // 未来可扩展支持多边形等类型的中心点
-    console.warn(`实体 ${entity.id} 没有有效位置`);
-    return null;
-  }
+  // // 加载 GeoJSON 数据
+  // async function loadGeoJson(url, options) {
+  //   try {
+  //     const dataSource = await GeoJsonDataSource.load(url, options);
+  //     await viewer.dataSources.add(dataSource);
+  //     return dataSource;
+  //   } catch (error) {
+  //     console.error(`加载 GeoJSON 文件 ${url} 失败:`, error);
+  //     throw error;
+  //   }
+  // }
 
-  processPointsAndDistances(pointGeoJSON, pointGeoJSONs)
+  // // 获取实体位置（支持点和其他类型）
+  // function getEntityPosition(entity, time = JulianDate.now()) {
+  //   if (!entity) return null;
+  //   if (entity.position) {
+  //     return entity.position.getValue(time);
+  //   }
+  //   // 未来可扩展支持多边形等类型的中心点
+  //   console.warn(`实体 ${entity.id} 没有有效位置`);
+  //   return null;
+  // }
 
-  // 主函数：处理点并计算距离
-  async function processPointsAndDistances(pointGeoJSON, pointGeoJSONs) {
-    try {
-      // 加载基准点 GeoJSON
-      const baseDataSource = await loadGeoJson(pointGeoJSON, {
-        // 设置高度参考为地面
-        heightReference: HeightReference.CLAMP_TO_GROUND,
-        markerSize: 50,
-        markerSymbol: 'circle',
-        markerColor: CesiumColor.RED
-      });
+  // processPointsAndDistances(pointGeoJSON, pointGeoJSONs)
 
-      // 验证基准点
-      const basePoint = baseDataSource.entities.values[0];
-      if (!basePoint) {
-        throw new Error('第一个 GeoJSON 中没有找到基准点');
-      }
-      const basePosition = getEntityPosition(basePoint);
-      if (!basePosition) {
-        throw new Error('基准点没有有效位置');
-      }
+  // // 主函数：处理点并计算距离
+  // async function processPointsAndDistances(pointGeoJSON, pointGeoJSONs) {
+  //   try {
+  //     // 加载基准点 GeoJSON
+  //     const baseDataSource = await loadGeoJson(pointGeoJSON, {
+  //       // 设置高度参考为地面
+  //       heightReference: HeightReference.CLAMP_TO_GROUND,
+  //       markerSize: 50,
+  //       markerSymbol: 'circle',
+  //       markerColor: CesiumColor.RED
+  //     });
 
-      // 加载其他点 GeoJSON
-      const pointsDataSource = await loadGeoJson(pointGeoJSONs, {
-        // 设置高度参考为地面
-        heightReference: HeightReference.CLAMP_TO_GROUND,
-        markerSize: 40,
-        markerSymbol: 'circle',
-        markerColor: CesiumColor.GREEN
-      });
+  //     // 验证基准点
+  //     const basePoint = baseDataSource.entities.values[0];
+  //     if (!basePoint) {
+  //       throw new Error('第一个 GeoJSON 中没有找到基准点');
+  //     }
+  //     const basePosition = getEntityPosition(basePoint);
+  //     if (!basePosition) {
+  //       throw new Error('基准点没有有效位置');
+  //     }
 
-      // 处理第二个 GeoJSON 中的每个实体
-      const entities = pointsDataSource.entities.values;
-      if (entities.length === 0) {
-        console.warn('第二个 GeoJSON 中没有实体');
-        return;
-      }
+  //     // 加载其他点 GeoJSON
+  //     const pointsDataSource = await loadGeoJson(pointGeoJSONs, {
+  //       // 设置高度参考为地面
+  //       heightReference: HeightReference.CLAMP_TO_GROUND,
+  //       markerSize: 40,
+  //       markerSymbol: 'circle',
+  //       markerColor: CesiumColor.GREEN
+  //     });
 
-      for (const entity of entities) {
-        const targetPosition = getEntityPosition(entity);
-        // console.log('targetPosition: ', targetPosition);
+  //     // 处理第二个 GeoJSON 中的每个实体
+  //     const entities = pointsDataSource.entities.values;
+  //     if (entities.length === 0) {
+  //       console.warn('第二个 GeoJSON 中没有实体');
+  //       return;
+  //     }
 
-        if (!targetPosition) return; // 跳过无位置的实体
+  //     for (const entity of entities) {
+  //       const targetPosition = getEntityPosition(entity);
+  //       // console.log('targetPosition: ', targetPosition);
 
-        const result = getDistance(basePosition, targetPosition);
-        if (!result) return;
+  //       if (!targetPosition) return; // 跳过无位置的实体
 
-        const { distance, baseCoords, targetCoords } = result;
+  //       const result = getDistance(basePosition, targetPosition);
+  //       if (!result) return;
 
-        // 绘制抛物线
-        addParabolaToScene(viewer,
-          [baseCoords.longitude, baseCoords.latitude, basePosition.height],
-          [targetCoords.longitude, targetCoords.latitude, targetPosition.height],
-          { height: distance / 10 }
-        );
-      }
+  //       const { distance, baseCoords, targetCoords } = result;
 
-      // 缩放到数据
-      viewer.zoomTo(pointsDataSource);
-    } catch (error) {
-      console.error('处理点数据时出错:', error);
-    }
-  }
+  //       // 绘制抛物线
+  //       addParabolaToScene(viewer,
+  //         [baseCoords.longitude, baseCoords.latitude, basePosition.height],
+  //         [targetCoords.longitude, targetCoords.latitude, targetPosition.height],
+  //         { height: distance / 10 }
+  //       );
+  //     }
 
-  cesiumStore.setViewer(viewer)
-  const { geometry } = pointGeoJSON
+  //     // 缩放到数据
+  //     viewer.zoomTo(pointsDataSource);
+  //   } catch (error) {
+  //     console.error('处理点数据时出错:', error);
+  //   }
+  // }
+
+  // const { geometry } = pointGeoJSON
 
   // cesiumFlyTo(geometry.coordinates)
 

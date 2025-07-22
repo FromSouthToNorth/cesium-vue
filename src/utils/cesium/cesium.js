@@ -12,7 +12,8 @@ import {
   Material,
   VertexFormat,
   JulianDate,
-  Cartographic
+  Cartographic,
+  sampleTerrainMostDetailed
 } from 'cesium'
 
 import { useCesium } from '@/hooks/cesium/useCesium';
@@ -43,101 +44,118 @@ export const cesiumFlyTo = (point, options = {}, viewer) => {
 /**
  * 添加抛物线到场景
  */
-export function addParabolaToScene(viewer, startPoint, endPoint, options = {}) {
+export function addParabolaToScene(viewer, startPoint, endPoint, options = {}, terrainProvider) {
   const _viewer = viewer || getViewer();
+  options.height = options.height || 200;
+  options.pointsCount = options.pointsCount || 200;
+  const pointsCount = options.pointsCount;
+
   // 获取路径坐标
-  const cartesianPositions = setPathData(startPoint, endPoint, options);
-  const pointsCount = options.pointsCount || 100;
+  setPathData(startPoint, endPoint, options, terrainProvider).then(e => {
+    // 创建颜色数组，用于给普通线条渐变着色
+    const colors = new Array(pointsCount);
+    for (let i = 0; i < pointsCount; i++) {
+      const ratio = i / (pointsCount - 1);
+      // 蓝色逐渐过渡到红色
+      colors[i] = CesiumColor.lerp(
+        new CesiumColor(0.0, 1.0, 0.0, 0.5), // 蓝色
+        new CesiumColor(0.0, 1.0, 0.0, 0.5), // 红色
+        ratio,
+        new CesiumColor()
+      );
+    }
 
-  // 创建颜色数组，用于给普通线条渐变着色
-  const colors = new Array(pointsCount);
-  for (let i = 0; i < pointsCount; i++) {
-    const ratio = i / (pointsCount - 1);
-    // 蓝色逐渐过渡到红色
-    colors[i] = CesiumColor.lerp(
-      new CesiumColor(0.0, 1.0, 0.0, 0.5), // 蓝色
-      new CesiumColor(0.0, 1.0, 0.0, 0.5), // 红色
-      ratio,
-      new CesiumColor()
+    // 1. 添加普通线条（渐变色）
+    _viewer.scene.primitives.add(
+      new Primitive({
+        geometryInstances: new GeometryInstance({
+          geometry: new PolylineGeometry({
+            positions: e,
+            width: 6.0,
+            vertexFormat: PolylineColorAppearance.VERTEX_FORMAT,
+            colors: colors,
+            colorsPerVertex: true,
+          }),
+        }),
+        appearance: new PolylineColorAppearance(),
+      })
     );
-  }
 
-  // 1. 添加普通线条（渐变色）
-  _viewer.scene.primitives.add(
-    new Primitive({
-      geometryInstances: new GeometryInstance({
-        geometry: new PolylineGeometry({
-          positions: cartesianPositions,
-          width: 6.0,
-          vertexFormat: PolylineColorAppearance.VERTEX_FORMAT,
-          colors: colors,
-          colorsPerVertex: true,
+    // 2. 创建流动线材质
+    const flowingMaterial = createFlowingLineMaterial();
+
+    // 3. 添加流动线
+    _viewer.scene.primitives.add(
+      new Primitive({
+        geometryInstances: new GeometryInstance({
+          geometry: new PolylineGeometry({
+            positions: e,
+            width: 20.0,
+            vertexFormat: VertexFormat.ALL,
+          }),
         }),
-      }),
-      appearance: new PolylineColorAppearance(),
-    })
-  );
-
-  // 2. 创建流动线材质
-  const flowingMaterial = createFlowingLineMaterial();
-
-  // 3. 添加流动线
-  _viewer.scene.primitives.add(
-    new Primitive({
-      geometryInstances: new GeometryInstance({
-        geometry: new PolylineGeometry({
-          positions: cartesianPositions,
-          width: 20.0,
-          vertexFormat: VertexFormat.ALL,
+        appearance: new PolylineMaterialAppearance({
+          material: flowingMaterial,
         }),
-      }),
-      appearance: new PolylineMaterialAppearance({
-        material: flowingMaterial,
-      }),
-    })
-  );
+      })
+    );
+  })
+
+
+
 };
 
 /**
  * 生成抛物线路径数据
  */
-const setPathData = (pointStart, pointEnd, options = {}) => {
+const setPathData = (pointStart, pointEnd, options, terrainProvider) => {
   // 合并默认选项
-  const height = options.height || 10000;
-  const pointsCount = options.pointsCount || 100;
+  const { height, pointsCount } = options
 
   // 提取起点和终点的经纬度
   const startLon = pointStart[0];
   const startLat = pointStart[1];
-  const startHeight = pointStart[2];
   const endLon = pointEnd[0];
   const endLat = pointEnd[1];
-  const endHeight = pointEnd[2];
 
-  // 预分配数组（每个点有经度、纬度、高度共 3 个值）
-  const positionsArray = new Array(pointsCount * 3);
+  // 查询地形高度
+  const positions = [
+    Cartographic.fromDegrees(startLon, startLat),
+    Cartographic.fromDegrees(endLon, endLat),
+  ];
 
-  // 生成抛物线点集
-  for (let i = 0; i < pointsCount; i++) {
-    // 计算当前点在起点到终点连线上的比例
-    const ratio = i / (pointsCount - 1);
+  if (terrainProvider) {
+    return sampleTerrainMostDetailed(terrainProvider, positions).then(() => {
+      const startTerrainHeight = positions[0].height || 0;
+      const endTerrainHeight = positions[1].height || 0;
 
-    // 线性插值计算当前经纬度
-    const lon = startLon + ratio * (endLon - startLon);
-    const lat = startLat + ratio * (endLat - startLat);
+      // 预分配数组（每个点有经度、纬度、高度共 3 个值）
+      const positionsArray = new Array(pointsCount * 3);
 
-    // 计算抛物线高度 - 利用公式 y = 4 * h * x * (1 - x)
-    const curHeight = 4 * height * ratio * (1 - ratio);
+      // 生成抛物线点集
+      for (let i = 0; i < pointsCount; i++) {
+        // 计算当前点在起点到终点连线上的比例
+        const ratio = i / (pointsCount - 1);
 
-    // 写入数组
-    const idx = i * 3;
-    positionsArray[idx] = lon;
-    positionsArray[idx + 1] = lat;
-    positionsArray[idx + 2] = curHeight;
+        // 线性插值计算当前经纬度
+        const lon = startLon + ratio * (endLon - startLon);
+        const lat = startLat + ratio * (endLat - startLat);
+        const terrainHeight = startTerrainHeight + ratio * (endTerrainHeight - startTerrainHeight);
+
+        // 计算抛物线高度 - 利用公式 y = 4 * h * x * (1 - x)
+        const parabolaHeight = 4 * height * ratio * (1 - ratio); // 抛物线高度
+        const curHeight = terrainHeight + parabolaHeight; // 地形高度 + 抛物线高度
+        // 写入数组
+        const idx = i * 3;
+        positionsArray[idx] = lon;
+        positionsArray[idx + 1] = lat;
+        positionsArray[idx + 2] = curHeight;
+      }
+
+      // 返回 Cesium 坐标数组
+      return Cartesian3.fromDegreesArrayHeights(positionsArray);
+    });
   }
-
-  // 返回 Cesium 坐标数组
-  return Cartesian3.fromDegreesArrayHeights(positionsArray);
 };
 
 /**

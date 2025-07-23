@@ -29,10 +29,11 @@ import {
   NearFarScalar,
   Material,
   CallbackProperty,
+  Color,
 } from 'cesium';
 import { randomPolygon, randomLineString, randomPoint } from '@turf/turf'
 import { getCenterOfMass } from '@/utils/geo'
-import { addParabolaToScene, cesiumFlyTo, cluster } from '@/utils/cesium';
+import { addParabolaToScene, cesiumFlyTo, cluster, createCircleWave } from '@/utils/cesium';
 import { useCesiumStore } from '@/stores/modules/cesiumStore';
 import Info from './info/index.vue';
 import Control from './control/index.vue';
@@ -158,6 +159,7 @@ onMounted(() => {
       viewer.zoomTo(dataSource.entities.values)
     })
     geoJSONLoad(PointGeoJSON, { clampToGround: false, markerSize: 20, markerColor: CesiumColor.GREEN })
+    createCircleWave(viewer, pointGeoJSON.geometry.coordinates, { color: '#1677ff' })
     // geoJSONLoad(pointGeoJSON, {}, () => {
     //   pointGeoJSONs.features.forEach(item => {
     //     addParabolaToScene(viewer, pointGeoJSON.geometry.coordinates, item.geometry.coordinates, { height: 300 }, res)

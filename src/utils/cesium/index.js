@@ -14,6 +14,10 @@ import {
   CesiumEventManager
 } from './event.js'
 
+import {
+  createCircleWave
+} from './animation.js'
+
 export {
   addParabolaToScene,
   cesiumEntityToGeoJSON,
@@ -21,5 +25,6 @@ export {
   entityToGeoJSON,
   getDistance,
   cluster,
+  createCircleWave,
   CesiumEventManager
 }

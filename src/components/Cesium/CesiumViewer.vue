@@ -26,26 +26,45 @@ import {
   IonResource,
   HeightReference,
   Event as CesiumEvent,
-
+  NearFarScalar,
+  Material,
+  CallbackProperty,
 } from 'cesium';
-import { randomPolygon, randomLineString } from '@turf/turf'
+import { randomPolygon, randomLineString, randomPoint } from '@turf/turf'
 import { getCenterOfMass } from '@/utils/geo'
-import { addParabolaToScene, cesiumFlyTo } from '@/utils/cesium';
+import { addParabolaToScene, cesiumFlyTo, cluster } from '@/utils/cesium';
 import { useCesiumStore } from '@/stores/modules/cesiumStore';
 import Info from './info/index.vue';
 import Control from './control/index.vue';
 
 import LineString from '@/assets/geojson/LineString.json'
+import PointGeoJSON from '@/assets/geojson/PointGeoJSON.json'
 
 const cesiumStore = useCesiumStore()
 
 const pointGeoJSON = {
   "id": "Point_A",
   "type": "Feature",
-  "properties": {},
+  "properties": {
+    "name": "山西保安煤业",
+    "label": "山西保安煤业"
+  },
   "geometry": {
     "type": "Point",
-    "coordinates": [104.0633, 30.6597]
+    "coordinates": [113.3532063, 37.8781213, 939.61]
+  }
+}
+
+const PolygonGeoJSON = {
+  "id": "Polygeo_B",
+  "type": "Feature",
+  "properties": {
+    "name": "山西保安煤业",
+    "label": "山西保安煤业"
+  },
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [[[113.378949, 37.861113], [113.353792, 37.878997], [113.353694, 37.890258], [113.291741, 37.889901], [113.287957, 37.869607], [113.308382, 37.873108], [113.331193, 37.864230], [113.345405, 37.868184], [113.353758, 37.874640]]]
   }
 }
 
@@ -63,11 +82,18 @@ onMounted(() => {
     // geocoder: IonGeocodeProviderType.GOOGLE, // 使用 Google 地理编码器
   });
 
-  const position = Cartesian3.fromDegrees(104.0633, 30.6597);
+  const scene = viewer.scene;
+  const globe = scene.globe;
+  globe.translucency.frontFaceAlphaByDistance = new NearFarScalar(
+    400.0,
+    0.0,
+    800.0,
+    1.0,
+  );
+  globe.translucency.enabled = true;
+  globe.translucency.frontFaceAlphaByDistance.nearValue = 0.5
 
-  // 定义模型位置（经度，纬度，高度）
-  // 设置朝向（航向、俯仰、滚转）
-  const headingPitchRoll = new HeadingPitchRoll(CesiumMath.toRadians(135), 0, 0);
+  const position = Cartesian3.fromDegrees(104.0633, 30.6597);
 
   const resource = IonResource.fromAssetId(3565717).then(e => {
     viewer.entities.add({
@@ -79,19 +105,22 @@ onMounted(() => {
       position
     });
   })
+
   const tileset = createOsmBuildingsAsync().then((layer) => {
-    viewer.scene.primitives.add(layer)
+    scene.primitives.add(layer)
   })
+
   // 启用调试模式以查看性能
-  viewer.scene.debugShowFramesPerSecond = true;
+  scene.debugShowFramesPerSecond = true;
   cesiumStore.setViewer(viewer)
   const bbox = [103.980875, 30.6263909, 104.1456699, 30.6936521]
+  // const bboxMax = [103.748703, 30.5285536, 104.4078827, 30.7975895]
   const ranPolygon = randomPolygon(15, { bbox, num_vertices: 4, max_radial_length: 0.006 })
-  const ranLineString = randomLineString(15, { bbox, num_vertices: 4, max_radial_length: 0.006 })
-
+  // const ranLineString = randomLineString(15, { bbox, num_vertices: 4, max_radial_length: 0.006 })
+  const ranPoint = randomPoint(460, { bbox: [104.0584928, 30.6590906, 104.0687925, 30.6632943] })
   console.log('LineString: ', LineString);
-  console.log(ranLineString);
-
+  // console.log(ranLineString);
+  console.log(ranPolygon);
 
   const features = ranPolygon.features.map(item => {
     return getCenterOfMass(item)
@@ -102,7 +131,7 @@ onMounted(() => {
   }
 
   const terrain = Terrain.fromWorldTerrain();
-  viewer.scene.setTerrain(terrain)
+  scene.setTerrain(terrain)
   function geoJSONLoad(geojson, options, callback) {
     const _options = Object.assign({
       markerSize: 50,
@@ -112,6 +141,7 @@ onMounted(() => {
       stroke: CesiumColor.BLUE, // 折线和多边形边框颜色
       fill: CesiumColor.YELLOW.withAlpha(0.5), // 多边形填充颜色
       strokeWidth: 3,
+      extrudedHeight: 0
     }, options)
     GeoJsonDataSource.load(geojson, _options).then(function (dataSource) {
       viewer.dataSources.add(dataSource).then(e => {
@@ -122,20 +152,25 @@ onMounted(() => {
 
   terrain.readyEvent.addEventListener((res) => {
     console.log('地形加载完成！', res);
-    geoJSONLoad(pointGeoJSON, {}, () => {
-      pointGeoJSONs.features.forEach(item => {
-        addParabolaToScene(viewer, pointGeoJSON.geometry.coordinates, item.geometry.coordinates, { height: 300 }, res)
-      })
+    geoJSONLoad(pointGeoJSON, { clampToGround: false })
+    // geoJSONLoad(PolygonGeoJSON)
+    geoJSONLoad(LineString, { clampToGround: false }, (dataSource) => {
+      viewer.zoomTo(dataSource.entities.values)
     })
-    geoJSONLoad(pointGeoJSONs, { markerColor: CesiumColor.GREEN, markerSize: 30 })
-    geoJSONLoad(ranPolygon, {}, (data) => {
-      viewer.zoomTo(data.entities.values)
-    })
-    geoJSONLoad(LineString, { clampToGround: false }, (data) => {
-      data.entities.values.forEach(item => {
-        // console.log(item.polyline.positions.getValue());
-      })
-    })
+    geoJSONLoad(PointGeoJSON, { clampToGround: false, markerSize: 20, markerColor: CesiumColor.GREEN })
+    // geoJSONLoad(pointGeoJSON, {}, () => {
+    //   pointGeoJSONs.features.forEach(item => {
+    //     addParabolaToScene(viewer, pointGeoJSON.geometry.coordinates, item.geometry.coordinates, { height: 300 }, res)
+    //   })
+    // })
+    // geoJSONLoad(pointGeoJSONs, { markerColor: CesiumColor.GREEN, markerSize: 30 })
+    // geoJSONLoad(ranPolygon, {}, (data) => {
+    //   viewer.zoomTo(data.entities.values)
+    // })
+    // geoJSONLoad(ranPoint, { markerSize: 20 }, (dataSource) => {
+    //   console.log(dataSource);
+    //   cluster(dataSource)
+    // })
   })
   terrain.errorEvent.addEventListener((error) => {
     console.log('获取地形失败: ', error);
@@ -144,13 +179,14 @@ onMounted(() => {
 
   viewer.homeButton.viewModel.command.afterExecute.addEventListener(() => cesiumFlyTo(geometry.coordinates));
 
-  const handler = new ScreenSpaceEventHandler(viewer.scene.canvas);
+  const handler = new ScreenSpaceEventHandler(scene.canvas);
 
   // 点击事件
   handler.setInputAction(function (movement) {
-    const pickedObject = viewer.scene.pick(movement.position);
+    const pickedObject = scene.pick(movement.position);
     if (defined(pickedObject) && defined(pickedObject.id)) {
       const entity = pickedObject.id;
+      console.log(entity);
       console.log(`LEFT_CLICK: ${entity.name} (ID: ${entity.id})`);
     }
   }, ScreenSpaceEventType.LEFT_CLICK);

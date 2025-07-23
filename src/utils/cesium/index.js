@@ -7,6 +7,10 @@ import {
 } from './cesium.js'
 
 import {
+  cluster
+} from './cluster.js'
+
+import {
   CesiumEventManager
 } from './event.js'
 
@@ -16,5 +20,6 @@ export {
   cesiumFlyTo,
   entityToGeoJSON,
   getDistance,
+  cluster,
   CesiumEventManager
 }

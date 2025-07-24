@@ -32,8 +32,10 @@ import {
   Cartographic,
   ClippingPolygon,
   ClippingPolygonCollection,
+  ClippingPlane,
+  ClippingPlaneCollection, JulianDate,
 } from 'cesium';
-import { randomPolygon, randomLineString, randomPoint } from '@turf/turf';
+import { randomPolygon, randomLineString, randomPoint, bbox as turfBbox, bboxPolygon, centroid } from '@turf/turf';
 import { getCenterOfMass } from '@/utils/geo';
 import { addParabolaToScene, cesiumFlyTo, cluster, createCircleWave } from '@/utils/cesium';
 import { useCesiumStore } from '@/stores/modules/cesiumStore';
@@ -135,7 +137,6 @@ onMounted(() => {
   );
   globe.translucency.enabled = true;
   globe.translucency.frontFaceAlphaByDistance.nearValue = 0.5;
-
   const position = Cartesian3.fromDegrees(104.0633, 30.6597);
 
   const resource = IonResource.fromAssetId(3565717)
@@ -201,12 +202,36 @@ onMounted(() => {
   terrain.readyEvent.addEventListener((res) => {
     console.log('地形加载完成！', res);
     console.log('PolygonGeoJSON: ');
-    const positions = PolygonGeoJSON.geometry.coordinates[0].map(e => {
+    const bbox = bboxPolygon(turfBbox(LineString));
+    console.log(bbox);
+    console.log(centroid(bbox));//113.33731935, 37.87774805
+    // const planes = bbox.geometry.coordinates[0].map(lonLat => {
+    //   return new ClippingPlane(Cartesian3.fromDegrees(lonLat[0], lonLat[1], 0.0), -700);
+    // });
+    // console.log(planes);
+    // const clippingPlanes = new ClippingPlaneCollection({
+    //   edgeColor: CesiumColor.WHITE,
+    //   planes,
+    //   enabled: true,
+    // });
+    // viewer.scene.globe.clippingPlanes = clippingPlanes;
+    // clippingPlanes 不生效
+    // const planes = []
+    // for (let i = 0; i < bbox.geometry.coordinates[0].length; i++) {
+    //   console.log(new ClippingPlane(Cartesian3.fromDegrees(bbox.geometry.coordinates[0][i][0], bbox.geometry.coordinates[0][i][1]), -700));
+    //   planes.push(new ClippingPlane(Cartesian3.fromDegrees(bbox.geometry.coordinates[0][i][0], bbox.geometry.coordinates[0][i][1]), -700))
+    // }
+    // const clippingPlanes = new ClippingPlaneCollection({
+    //   edgeColor: CesiumColor.WHITE,
+    //   planes,
+    //   enabled: true,
+    // });
+    // viewer.scene.globe.clippingPlanes = clippingPlanes;
+    const { coordinates } = bbox.geometry;
+    const positions = coordinates[0].map(e => {
       return Cartesian3.fromDegrees(e[0], e[1], 1000);
     });
     const polygon = new ClippingPolygon({ positions });
-    console.log(positions);
-    // console.log(new ClippingPolygonCollection({ polygons: [polygon] }));
     viewer.scene.globe.clippingPolygons = new ClippingPolygonCollection({ polygons: [polygon] });
 
     geoJSONLoad(pointGeoJSON, { clampToGround: false });

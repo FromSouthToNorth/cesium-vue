@@ -4,8 +4,9 @@ import {
   Event as CesiumEvent,
   Material,
   defined,
-  Cartesian3
-} from "cesium";
+  Cartesian3,
+} from 'cesium';
+
 // 定义 CircleWaveMaterialProperty 类
 function CircleWaveMaterialProperty(options) {
   options = defaultValue(options, defaultValue.EMPTY_OBJECT);
@@ -25,66 +26,66 @@ function CircleWaveMaterialProperty(options) {
 
 Object.defineProperties(CircleWaveMaterialProperty.prototype, {
   isConstant: {
-    get: function () {
+    get: function() {
       return false;
-    }
+    },
   },
   definitionChanged: {
-    get: function () {
+    get: function() {
       return this._definitionChanged;
-    }
+    },
   },
   color: {
-    get: function () {
+    get: function() {
       return this._color;
     },
-    set: function (value) {
+    set: function(value) {
       if (!CesiumColor.equals(this._color, value)) {
         this._color = CesiumColor.clone(value, this._color);
         this._definitionChanged.raiseEvent(this);
       }
-    }
+    },
   },
   duration: {
-    get: function () {
+    get: function() {
       return this._duration;
     },
-    set: function (value) {
+    set: function(value) {
       if (this._duration !== value) {
         this._duration = value;
         this._definitionChanged.raiseEvent(this);
       }
-    }
+    },
   },
   count: {
-    get: function () {
+    get: function() {
       return this._count;
     },
-    set: function (value) {
+    set: function(value) {
       if (this._count !== value) {
         this._count = value > 0 ? value : 1;
         this._definitionChanged.raiseEvent(this);
       }
-    }
+    },
   },
   gradient: {
-    get: function () {
+    get: function() {
       return this._gradient;
     },
-    set: function (value) {
+    set: function(value) {
       if (this._gradient !== value) {
         this._gradient = Math.max(0, Math.min(1, value));
         this._definitionChanged.raiseEvent(this);
       }
-    }
-  }
+    },
+  },
 });
 
-CircleWaveMaterialProperty.prototype.getType = function () {
+CircleWaveMaterialProperty.prototype.getType = function() {
   return 'CircleWaveMaterial';
 };
 
-CircleWaveMaterialProperty.prototype.getValue = function (time, result) {
+CircleWaveMaterialProperty.prototype.getValue = function(time, result) {
   if (!defined(result)) {
     result = {};
   }
@@ -95,7 +96,7 @@ CircleWaveMaterialProperty.prototype.getValue = function (time, result) {
   return result;
 };
 
-CircleWaveMaterialProperty.prototype.equals = function (other) {
+CircleWaveMaterialProperty.prototype.equals = function(other) {
   return this === other || (
     other instanceof CircleWaveMaterialProperty &&
     CesiumColor.equals(this._color, other._color) &&
@@ -113,52 +114,51 @@ Material._materialCache.addMaterial('CircleWaveMaterial', {
       color: new CesiumColor(181 / 255, 241 / 255, 254 / 255, 1), // 默认颜色
       time: 1,
       count: 1,
-      gradient: 0.1
+      gradient: 0.1,
     },
-    source: `
-            czm_material czm_getMaterial(czm_materialInput materialInput) {
-                czm_material material = czm_getDefaultMaterial(materialInput);
-                material.diffuse = 1.5 * color.rgb;
-                vec2 st = materialInput.st;
-                vec3 str = materialInput.str;
-                float dis = distance(st, vec2(0.5, 0.5));
-                float per = fract(time);
-                if (abs(str.z) > 0.001) {
-                    discard;
-                }
-                if (dis > 0.5) {
-                    discard;
-                } else {
-                    float perDis = 0.5 / count;
-                    float disNum;
-                    float bl = 0.0;
-                    for (int i = 0; i <= 9; i++) {
-                        if (float(i) <= count) {
-                            disNum = perDis * float(i) - dis + per / count;
-                            if (disNum > 0.0) {
-                                if (disNum < perDis) {
-                                    bl = 1.0 - disNum / perDis;
-                                } else if (disNum - perDis < perDis) {
-                                    bl = 1.0 - abs(1.0 - disNum / perDis);
-                                }
-                                material.alpha = pow(bl, gradient);
-                            }
-                        }
-                    }
-                }
-                return material;
-            }
-        `
+    source: `czm_material czm_getMaterial(czm_materialInput materialInput) {
+               czm_material material = czm_getDefaultMaterial(materialInput);
+               material.diffuse = 1.5 * color.rgb;
+               vec2 st = materialInput.st;
+               vec3 str = materialInput.str;
+               float dis = distance(st, vec2(0.5, 0.5));
+               float per = fract(time);
+               if (abs(str.z) > 0.001) {
+                discard;
+               }
+               if (dis > 0.5) {
+                 discard;
+               } else {
+                 float perDis = 0.5 / count;
+                 float disNum;
+                 float bl = 0.0;
+                 for (int i = 0; i <= 9; i++) {
+                   if (float(i) <= count) {
+                     disNum = perDis * float(i) - dis + per / count;
+                     if (disNum > 0.0) {
+                       if (disNum < perDis) {
+                           bl = 1.0 - disNum / perDis;
+                       } else if (disNum - perDis < perDis) {
+                           bl = 1.0 - abs(1.0 - disNum / perDis);
+                       }
+                       material.alpha = pow(bl, gradient);
+                     }
+                   }
+                 }
+               }
+               return material;
+            }`,
   },
-  translucent: function () {
+  translucent: function() {
     return true;
-  }
+  },
 });
+
 export function createCircleWave(viewer, position, options = {}) {
-  const color = options.color || '#fadb14'
-  const duration = options.duration || 3000
-  const gradient = options.gradient || 0.6
-  const count = options.gradient || 4
+  const color = options.color || '#fadb14';
+  const duration = options.duration || 3000;
+  const gradient = options.gradient || 0.6;
+  const count = options.gradient || 2;
   // 添加带有波纹效果的实体
   viewer.entities.add({
     position: Cartesian3.fromDegrees(position[0], position[1]),
@@ -170,9 +170,9 @@ export function createCircleWave(viewer, position, options = {}) {
         color,
         duration,
         gradient,
-        count
-      })
-    }
+        count,
+      }),
+    },
   });
 
 }

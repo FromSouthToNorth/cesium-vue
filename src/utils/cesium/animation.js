@@ -163,8 +163,8 @@ export function createCircleWave(viewer, position, options = {}) {
   viewer.entities.add({
     position: Cartesian3.fromDegrees(position[0], position[1]),
     ellipse: {
-      semiMinorAxis: 80,
-      semiMajorAxis: 80,
+      semiMinorAxis: 160,
+      semiMajorAxis: 160,
       height: position[2] || 0,
       material: new CircleWaveMaterialProperty({
         color,

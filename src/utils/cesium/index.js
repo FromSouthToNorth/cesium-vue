@@ -19,7 +19,7 @@ import {
 } from './animation.js';
 
 import {
-  getIcon
+  createIconMarker
 } from './icon.js';
 
 export {
@@ -30,6 +30,6 @@ export {
   getDistance,
   cluster,
   createCircleWave,
-  getIcon,
+  createIconMarker,
   CesiumEventManager,
 };

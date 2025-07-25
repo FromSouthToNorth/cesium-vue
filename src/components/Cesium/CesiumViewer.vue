@@ -36,10 +36,12 @@ import {
   ClippingPlaneCollection,
   JulianDate,
   sampleTerrainMostDetailed,
+  buildModuleUrl,
+  PinBuilder,
 } from 'cesium';
 import { randomPolygon, randomLineString, randomPoint, bbox as turfBbox, bboxPolygon, centroid } from '@turf/turf';
 import { getCenterOfMass } from '@/utils/geo';
-import { addParabolaToScene, cesiumFlyTo, cluster, createCircleWave, getIcon } from '@/utils/cesium';
+import { addParabolaToScene, cesiumFlyTo, cluster, createCircleWave, createIconMarker } from '@/utils/cesium';
 import { useCesiumStore } from '@/stores/modules/cesiumStore';
 import Info from './info/index.vue';
 import Control from './control/index.vue';
@@ -228,22 +230,16 @@ onMounted(() => {
     });
     geoJSONLoad(PointGeoJSON, {
       clampToGround: false,
-      markerSize: 20,
+      markerSize: 30,
       markerColor: CesiumColor.GREEN,
     }, (dataSource) => {
       dataSource.entities.values.map((entity) => {
-        // console.log('entity: ', entity);
-        const { type, location } = entity.properties.getValue();
-        const icon = getIcon(type);
-        // console.log(icon, location, markerColor);
-        if (icon) {
-          console.log(icon);
-          entity.billboard.image = icon;
-        }
+        console.log('entity: ', entity.properties.getValue());
+        createIconMarker(entity);
       });
     });
     createCircleWave(viewer, pointGeoJSON.geometry.coordinates, { color: '#cf1322' });
-    geoJSONLoad(points, { markerSize: 30 }, (dataSource) => {
+    geoJSONLoad(points, { markerSize: 40 }, (dataSource) => {
       const positions = [];
       dataSource.entities.values.forEach((entity) => {
         const lonLat = Cartographic.fromCartesian(entity.position.getValue());

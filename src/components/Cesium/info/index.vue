@@ -34,13 +34,13 @@ onMounted(() => {
 watch(
     viewer,
     () => {
+      console.log('viewer: ', viewer);
       getCesiumInfo();
       const { camera,scene } = toRaw(unref(viewer));
       camera.moveStart.addEventListener(() => {
         showInfo.value = false;
       });
       camera.moveEnd.addEventListener(() => {
-        console.log('moveEnd');
         getCesiumInfo();
         showInfo.value = true;
       });

@@ -39,7 +39,7 @@ import {
 } from 'cesium';
 import { randomPolygon, randomLineString, randomPoint, bbox as turfBbox, bboxPolygon, centroid } from '@turf/turf';
 import { getCenterOfMass } from '@/utils/geo';
-import { addParabolaToScene, cesiumFlyTo, cluster, createCircleWave } from '@/utils/cesium';
+import { addParabolaToScene, cesiumFlyTo, cluster, createCircleWave, getIcon } from '@/utils/cesium';
 import { useCesiumStore } from '@/stores/modules/cesiumStore';
 import Info from './info/index.vue';
 import Control from './control/index.vue';
@@ -128,6 +128,7 @@ onMounted(() => {
     // globe: false, // 关闭默认地球
     // geocoder: IonGeocodeProviderType.GOOGLE, // 使用 Google 地理编码器
   });
+  cesiumStore.setViewer(viewer);
 
   const scene = viewer.scene;
   const globe = scene.globe;
@@ -160,12 +161,10 @@ onMounted(() => {
 
   // 启用调试模式以查看性能
   scene.debugShowFramesPerSecond = true;
-  cesiumStore.setViewer(viewer);
   const bbox = [103.980875, 30.6263909, 104.1456699, 30.6936521];
   // const bboxMax = [103.748703, 30.5285536, 104.4078827, 30.7975895]
   const ranPolygon = randomPolygon(15, { bbox, num_vertices: 4, max_radial_length: 0.006 });
   // const ranLineString = randomLineString(15, { bbox, num_vertices: 4, max_radial_length: 0.006 })
-  const ranPoint = randomPoint(460, { bbox: [104.0584928, 30.6590906, 104.0687925, 30.6632943] });
   console.log('LineString: ', LineString);
   // console.log(ranLineString);
   console.log(ranPolygon);
@@ -204,7 +203,6 @@ onMounted(() => {
 
   terrain.readyEvent.addEventListener((terr) => {
     console.log('地形加载完成！', terr);
-    console.log('PolygonGeoJSON: ');
     const bbox = bboxPolygon(turfBbox(LineString));
     const { coordinates } = bbox.geometry;
     const positions = coordinates[0].map(e => {
@@ -228,7 +226,22 @@ onMounted(() => {
         duration: 2.0,
       });
     });
-    geoJSONLoad(PointGeoJSON, { clampToGround: false, markerSize: 20, markerColor: CesiumColor.GREEN });
+    geoJSONLoad(PointGeoJSON, {
+      clampToGround: false,
+      markerSize: 20,
+      markerColor: CesiumColor.GREEN,
+    }, (dataSource) => {
+      dataSource.entities.values.map((entity) => {
+        // console.log('entity: ', entity);
+        const { type, location } = entity.properties.getValue();
+        const icon = getIcon(type);
+        // console.log(icon, location, markerColor);
+        if (icon) {
+          console.log(icon);
+          entity.billboard.image = icon;
+        }
+      });
+    });
     createCircleWave(viewer, pointGeoJSON.geometry.coordinates, { color: '#cf1322' });
     geoJSONLoad(points, { markerSize: 30 }, (dataSource) => {
       const positions = [];

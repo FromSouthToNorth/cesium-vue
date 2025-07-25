@@ -4,19 +4,23 @@ import {
   cesiumFlyTo,
   entityToGeoJSON,
   getDistance,
-} from './cesium.js'
+} from './cesium.js';
 
 import {
-  cluster
-} from './cluster.js'
+  cluster,
+} from './cluster.js';
 
 import {
-  CesiumEventManager
-} from './event.js'
+  CesiumEventManager,
+} from './event.js';
 
 import {
-  createCircleWave
-} from './animation.js'
+  createCircleWave,
+} from './animation.js';
+
+import {
+  getIcon
+} from './icon.js';
 
 export {
   addParabolaToScene,
@@ -26,5 +30,6 @@ export {
   getDistance,
   cluster,
   createCircleWave,
-  CesiumEventManager
-}
+  getIcon,
+  CesiumEventManager,
+};

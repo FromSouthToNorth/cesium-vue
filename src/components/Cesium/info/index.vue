@@ -13,50 +13,59 @@
 </template>
 
 <script setup>
+import { onMounted, ref, watch, toRaw, unref } from 'vue';
+import { Math as CesiumMath, ScreenSpaceEventHandler, ScreenSpaceEventType } from 'cesium';
 
-import { onMounted, ref, watch, toRaw, unref } from 'vue'
-import { Math as CesiumMath } from 'cesium'
+import { useCesium } from '@/hooks/cesium/useCesium';
 
-import { useCesium } from '@/hooks/cesium/useCesium'
+const { viewer } = useCesium();
 
-const { viewer } = useCesium()
-
-const longitude = ref(null)
-const latitude = ref(null)
-const height = ref(null)
-const heading = ref(null)
-const pitch = ref(null)
-const roll = ref(null)
-const showInfo = ref(false)
+const longitude = ref(null);
+const latitude = ref(null);
+const height = ref(null);
+const heading = ref(null);
+const pitch = ref(null);
+const roll = ref(null);
+const showInfo = ref(false);
 
 onMounted(() => {
-})
+});
 
 watch(
-  viewer,
-  () => {
-    getCesiumInfo()
-    const { camera } = toRaw(unref(viewer))
-    camera.moveStart.addEventListener(() => {
-      showInfo.value = false
-    });
-    camera.moveEnd.addEventListener(() => {
-      getCesiumInfo()
-      showInfo.value = true
-    });
-  }
-)
+    viewer,
+    () => {
+      getCesiumInfo();
+      const { camera,scene } = toRaw(unref(viewer));
+      camera.moveStart.addEventListener(() => {
+        showInfo.value = false;
+      });
+      camera.moveEnd.addEventListener(() => {
+        console.log('moveEnd');
+        getCesiumInfo();
+        showInfo.value = true;
+      });
+      const handler = new ScreenSpaceEventHandler(scene.canvas);
+      handler.setInputAction(() => {
+        showInfo.value = true;
+      }, ScreenSpaceEventType.LEFT_UP)
+    },
+);
 
 function getCesiumInfo() {
   // 获取当前相机位置（弧度制）
-  const { camera } = toRaw(unref(viewer))
+  const { camera } = toRaw(unref(viewer));
   const cartographic = camera.positionCartographic;
-  longitude.value.textContent = CesiumMath.toDegrees(cartographic.longitude).toFixed(7);
-  latitude.value.textContent = CesiumMath.toDegrees(cartographic.latitude).toFixed(7);
+  longitude.value.textContent = CesiumMath.toDegrees(cartographic.longitude)
+      .toFixed(7);
+  latitude.value.textContent = CesiumMath.toDegrees(cartographic.latitude)
+      .toFixed(7);
   height.value.textContent = Math.ceil(cartographic.height);
-  pitch.value.textContent = CesiumMath.toDegrees(camera.pitch).toFixed(2);
-  heading.value.textContent = CesiumMath.toDegrees(camera.heading).toFixed(2);
-  roll.value.textContent = CesiumMath.toDegrees(camera.roll).toFixed(2);
+  pitch.value.textContent = CesiumMath.toDegrees(camera.pitch)
+      .toFixed(2);
+  heading.value.textContent = CesiumMath.toDegrees(camera.heading)
+      .toFixed(2);
+  roll.value.textContent = CesiumMath.toDegrees(camera.roll)
+      .toFixed(2);
 }
 </script>
 

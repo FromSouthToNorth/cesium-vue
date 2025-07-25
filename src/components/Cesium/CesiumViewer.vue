@@ -33,7 +33,9 @@ import {
   ClippingPolygon,
   ClippingPolygonCollection,
   ClippingPlane,
-  ClippingPlaneCollection, JulianDate,
+  ClippingPlaneCollection,
+  JulianDate,
+  sampleTerrainMostDetailed,
 } from 'cesium';
 import { randomPolygon, randomLineString, randomPoint, bbox as turfBbox, bboxPolygon, centroid } from '@turf/turf';
 import { getCenterOfMass } from '@/utils/geo';
@@ -171,6 +173,7 @@ onMounted(() => {
   const features = ranPolygon.features.map(item => {
     return getCenterOfMass(item);
   });
+
   const pointGeoJSONs = {
     type: 'FeatureCollection',
     features,
@@ -199,40 +202,24 @@ onMounted(() => {
         });
   }
 
-  terrain.readyEvent.addEventListener((res) => {
-    console.log('地形加载完成！', res);
+  terrain.readyEvent.addEventListener((terr) => {
+    console.log('地形加载完成！', terr);
     console.log('PolygonGeoJSON: ');
     const bbox = bboxPolygon(turfBbox(LineString));
-    console.log(bbox);
-    console.log(centroid(bbox));//113.33731935, 37.87774805
-    // const planes = bbox.geometry.coordinates[0].map(lonLat => {
-    //   return new ClippingPlane(Cartesian3.fromDegrees(lonLat[0], lonLat[1], 0.0), -700);
-    // });
-    // console.log(planes);
-    // const clippingPlanes = new ClippingPlaneCollection({
-    //   edgeColor: CesiumColor.WHITE,
-    //   planes,
-    //   enabled: true,
-    // });
-    // viewer.scene.globe.clippingPlanes = clippingPlanes;
-    // clippingPlanes 不生效
-    // const planes = []
-    // for (let i = 0; i < bbox.geometry.coordinates[0].length; i++) {
-    //   console.log(new ClippingPlane(Cartesian3.fromDegrees(bbox.geometry.coordinates[0][i][0], bbox.geometry.coordinates[0][i][1]), -700));
-    //   planes.push(new ClippingPlane(Cartesian3.fromDegrees(bbox.geometry.coordinates[0][i][0], bbox.geometry.coordinates[0][i][1]), -700))
-    // }
-    // const clippingPlanes = new ClippingPlaneCollection({
-    //   edgeColor: CesiumColor.WHITE,
-    //   planes,
-    //   enabled: true,
-    // });
-    // viewer.scene.globe.clippingPlanes = clippingPlanes;
     const { coordinates } = bbox.geometry;
     const positions = coordinates[0].map(e => {
       return Cartesian3.fromDegrees(e[0], e[1], 1000);
     });
+    let clippingPolygonEnabled = true;
+    const viewModel = {
+      clippingPlanesEnabled: true,
+    };
     const polygon = new ClippingPolygon({ positions });
-    viewer.scene.globe.clippingPolygons = new ClippingPolygonCollection({ polygons: [polygon] });
+    const clippingPolygons = new ClippingPolygonCollection({
+      polygons: [polygon],
+      enabled: clippingPolygonEnabled,
+    });
+    globe.clippingPolygons = clippingPolygons;
 
     geoJSONLoad(pointGeoJSON, { clampToGround: false });
     // geoJSONLoad(PolygonGeoJSON)
@@ -244,17 +231,24 @@ onMounted(() => {
     geoJSONLoad(PointGeoJSON, { clampToGround: false, markerSize: 20, markerColor: CesiumColor.GREEN });
     createCircleWave(viewer, pointGeoJSON.geometry.coordinates, { color: '#cf1322' });
     geoJSONLoad(points, { markerSize: 30 }, (dataSource) => {
+      const positions = [];
       dataSource.entities.values.forEach((entity) => {
         const lonLat = Cartographic.fromCartesian(entity.position.getValue());
+        positions.push(lonLat);
         const pos = [CesiumMath.toDegrees(lonLat.longitude), CesiumMath.toDegrees(lonLat.latitude)];
-        addParabolaToScene(viewer, pointGeoJSON.geometry.coordinates, pos, {}, res);
+        addParabolaToScene(viewer, pointGeoJSON.geometry.coordinates, pos, {}, terr);
       });
+      sampleTerrainMostDetailed(terr, positions)
+          .then((result) => {
+            result.forEach(e => {
+              createCircleWave(viewer, [CesiumMath.toDegrees(e.longitude), CesiumMath.toDegrees(e.latitude), e.height], {});
+            });
+          });
     });
   });
   terrain.errorEvent.addEventListener((error) => {
     console.log('获取地形失败: ', error);
   });
-
 
   viewer.homeButton.viewModel.command.afterExecute.addEventListener(() => cesiumFlyTo(pointGeoJSON.geometry.coordinates));
 

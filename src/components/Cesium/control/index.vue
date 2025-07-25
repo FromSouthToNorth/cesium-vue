@@ -1,16 +1,16 @@
 <template>
   <div class="compass-control">
     <button>
-      <img ref="compass" src="@/assets/svg/compass.svg" alt="Compass" class="compass-icon" @click="toggleSliders" />
+      <img ref="compass" src="@/assets/svg/compass.svg" alt="Compass" class="compass-icon" @click="toggleSliders"/>
     </button>
     <div v-if="showSliders" class="sliders">
       <div class="slider-group">
         <label>倾斜度 (Pitch): {{ pitch }}°</label>
-        <input type="range" v-model.number="pitch" min="-90" max="0" step="1" @input="updateCamera" />
+        <input type="range" v-model.number="pitch" min="-90" max="0" step="1" @input="updateCamera"/>
       </div>
       <div class="slider-group">
         <label>方位角 (Heading): {{ heading }}°</label>
-        <input type="range" v-model.number="heading" min="0" max="360" step="1" @input="updateCamera" />
+        <input type="range" v-model.number="heading" min="0" max="360" step="1" @input="updateCamera"/>
       </div>
       <button @click="resetToNorth">重置向北</button>
     </div>
@@ -25,37 +25,37 @@ import { useCesium } from '@/hooks/cesium/useCesium';
 
 const { viewer } = useCesium();
 
-const compass = ref(null)
-const pitch = ref(0)
-const heading = ref(0)
-const showSliders = ref(false)
+const compass = ref(null);
+const pitch = ref(0);
+const heading = ref(0);
+const showSliders = ref(false);
 
 function toggleSliders() {
-  showSliders.value = !showSliders.value
+  showSliders.value = !showSliders.value;
 }
 
 function setPitchHeading() {
-  const { camera } = toRaw(unref(viewer))
+  const { camera } = toRaw(unref(viewer));
   pitch.value = Math.round(CesiumMath.toDegrees(camera.pitch));
   heading.value = Math.round(CesiumMath.toDegrees(camera.heading));
 }
 
 watch(viewer, () => {
-  const { camera } = toRaw(unref(viewer))
-  setPitchHeading()
+  const { camera } = toRaw(unref(viewer));
+  setPitchHeading();
   camera.moveEnd.addEventListener(() => {
-    setPitchHeading()
-    setCompassRotate()
+    setPitchHeading();
+    setCompassRotate();
   });
-})
+});
 
 function updateCamera() {
-  setView()
+  setView();
 }
 
 function setView() {
-  const { camera } = toRaw(unref(viewer))
-  setCompassRotate()
+  const { camera } = toRaw(unref(viewer));
+  setCompassRotate();
   camera.setView({
     destination: camera.position,
     orientation: {
@@ -67,14 +67,14 @@ function setView() {
 }
 
 function resetToNorth() {
-  pitch.value = -90
-  heading.value = 360
-  setView()
+  pitch.value = -90;
+  heading.value = 360;
+  setView();
 }
 
 function setCompassRotate() {
-  const rot = heading.value > 0 ? -heading.value : Math.abs(heading.value)
-  compass.value.style.transform = `rotate(${rot}deg)`
+  const rot = heading.value > 0 ? -heading.value : Math.abs(heading.value);
+  compass.value.style.transform = `rotate(${rot}deg)`;
 }
 </script>
 <style scoped>

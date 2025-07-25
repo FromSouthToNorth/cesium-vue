@@ -134,14 +134,17 @@ onMounted(() => {
 
   const scene = viewer.scene;
   const globe = scene.globe;
-  globe.translucency.frontFaceAlphaByDistance = new NearFarScalar(
-      400.0,
-      0.0,
-      800.0,
-      1.0,
-  );
-  globe.translucency.enabled = true;
-  globe.translucency.frontFaceAlphaByDistance.nearValue = 0.5;
+
+  scene.screenSpaceCameraController.enableCollisionDetection = false;
+
+  // globe.translucency.frontFaceAlphaByDistance = new NearFarScalar(
+  //     400.0,
+  //     0.0,
+  //     800.0,
+  //     1.0,
+  // );
+  // globe.translucency.enabled = true;
+  // globe.translucency.frontFaceAlphaByDistance.nearValue = 0.5;
   const position = Cartesian3.fromDegrees(104.0633, 30.6597);
 
   const resource = IonResource.fromAssetId(3565717)
@@ -234,7 +237,6 @@ onMounted(() => {
       markerColor: CesiumColor.GREEN,
     }, (dataSource) => {
       dataSource.entities.values.map((entity) => {
-        console.log('entity: ', entity.properties.getValue());
         createIconMarker(entity);
       });
     });
@@ -268,7 +270,7 @@ onMounted(() => {
     const pickedObject = scene.pick(movement.position);
     if (defined(pickedObject) && defined(pickedObject.id)) {
       const entity = pickedObject.id;
-      console.log(entity);
+      console.log(entity.properties.getValue());
       console.log(`LEFT_CLICK: ${entity.name} (ID: ${entity.id})`);
     }
   }, ScreenSpaceEventType.LEFT_CLICK);

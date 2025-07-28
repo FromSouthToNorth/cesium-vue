@@ -250,10 +250,9 @@ onMounted(() => {
     geoJSONLoad(pointGeoJSON, { clampToGround: false });
     // geoJSONLoad(PolygonGeoJSON)
     geoJSONLoad(LineString, { clampToGround: false, strokeWidth: 2 }, (dataSource) => {
-      viewer.flyTo(dataSource.entities.values, {
-        duration: 2.0,
-
-      });
+      // viewer.flyTo(dataSource.entities.values, {
+      //   duration: 2.0,
+      // });
     });
     geoJSONLoad(PointGeoJSON, {
       clampToGround: false,
@@ -298,7 +297,7 @@ onMounted(() => {
   viewer.clock.stopTime = stop.clone();
   viewer.clock.currentTime = start.clone();
   viewer.clock.clockRange = ClockRange.LOOP_STOP; //Loop at the end
-  viewer.clock.multiplier = 0.6;
+  viewer.clock.multiplier = 0.3;
 
   // viewer.timeline.zoomTo(start, stop);
 
@@ -334,8 +333,8 @@ onMounted(() => {
 
     //Load the Cesium plane model to represent the entity
     model: {
-      uri: '/src/assets/models/Cesium_Air.glb',
-      minimumPixelSize: 64,
+      uri: '/src/assets/models/GroundVehicle.glb',
+      minimumPixelSize: 32,
     },
 
     //Show the path as a pink line sampled in 1 second increments.
@@ -348,6 +347,8 @@ onMounted(() => {
       width: 12,
     },
   });
+
+  viewer.trackedEntity = entity
 
   viewer.homeButton.viewModel.command.afterExecute.addEventListener(() => cesiumFlyTo(pointGeoJSON.geometry.coordinates));
 

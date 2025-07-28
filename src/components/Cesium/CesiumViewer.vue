@@ -38,6 +38,12 @@ import {
   sampleTerrainMostDetailed,
   buildModuleUrl,
   PinBuilder,
+  SampledPositionProperty,
+  ClockRange,
+  TimeIntervalCollection,
+  TimeInterval,
+  VelocityOrientationProperty,
+  PolylineGlowMaterialProperty,
 } from 'cesium';
 import { randomPolygon, randomLineString, randomPoint, bbox as turfBbox, bboxPolygon, centroid } from '@turf/turf';
 import { getCenterOfMass } from '@/utils/geo';
@@ -47,7 +53,8 @@ import Info from './info/index.vue';
 import Control from './control/index.vue';
 
 import LineString from '@/assets/geojson/LineString.json';
-import PointGeoJSON from '@/assets/geojson/PointGeoJSON.json';
+import PointGeoJSON from '@/assets/geojson/Point.json';
+import ADLineString from '@/assets/geojson/ADLineString.json';
 
 const cesiumStore = useCesiumStore();
 
@@ -123,9 +130,10 @@ onMounted(() => {
     infoBox: false,
     timeline: false,
     animation: false,
+    shouldAnimate: true, // Enable animations
     terrain: Terrain.fromWorldTerrain({
       requestWaterMask: true, // 启用水面效果
-      // requestVertexNormals: true // 启用地形法线以支持光照
+      requestVertexNormals: true // 启用地形法线以支持光照
     }),
     // globe: false, // 关闭默认地球
     // geocoder: IonGeocodeProviderType.GOOGLE, // 使用 Google 地理编码器
@@ -256,9 +264,73 @@ onMounted(() => {
             });
           });
     });
+
+    // geoJSONLoad(ADLineString, { clampToGround: false, stroke: CesiumColor.BLUE, strokeWidth: 12 });
   });
   terrain.errorEvent.addEventListener((error) => {
     console.log('获取地形失败: ', error);
+  });
+
+  console.log('ADLineString: ', ADLineString.geometry.coordinates);
+  const { coordinates: adCoords } = ADLineString.geometry;
+  let index = 0;
+  // Set bounds of our simulation time
+  const start = JulianDate.fromDate(new Date(2015, 2, 25, 16));
+  const stop = JulianDate.addSeconds(start, 126, new JulianDate());
+  // Make sure viewer is at the desired time.
+  viewer.clock.startTime = start.clone();
+  viewer.clock.stopTime = stop.clone();
+  viewer.clock.currentTime = start.clone();
+  viewer.clock.clockRange = ClockRange.LOOP_STOP; //Loop at the end
+  viewer.clock.multiplier = 0.6;
+
+  // viewer.timeline.zoomTo(start, stop);
+
+  const property = new SampledPositionProperty();
+  for (const [lno, lat, z] of adCoords) {
+    const time = JulianDate.addSeconds(start, index++, new JulianDate());
+    const pos = Cartesian3.fromDegrees(lno, lat, z);
+    property.addSample(time, pos);
+    viewer.entities.add({
+      position: pos,
+      point: {
+        pixelSize: 6,
+        color: CesiumColor.TRANSPARENT,
+        outlineColor: CesiumColor.WHITE,
+        outlineWidth: 3,
+      },
+    });
+  }
+  const entity = viewer.entities.add({
+    //Set the entity availability to the same interval as the simulation time.
+    availability: new TimeIntervalCollection([
+      new TimeInterval({
+        start,
+        stop,
+      }),
+    ]),
+
+    //Use our computed positions
+    position: property,
+
+    //Automatically compute orientation based on position movement.
+    orientation: new VelocityOrientationProperty(property),
+
+    //Load the Cesium plane model to represent the entity
+    model: {
+      uri: '/src/assets/models/Cesium_Air.glb',
+      minimumPixelSize: 64,
+    },
+
+    //Show the path as a pink line sampled in 1 second increments.
+    path: {
+      resolution: 1,
+      material: new PolylineGlowMaterialProperty({
+        glowPower: 0.1,
+        color: CesiumColor.YELLOW,
+      }),
+      width: 12,
+    },
   });
 
   viewer.homeButton.viewModel.command.afterExecute.addEventListener(() => cesiumFlyTo(pointGeoJSON.geometry.coordinates));
@@ -270,7 +342,7 @@ onMounted(() => {
     const pickedObject = scene.pick(movement.position);
     if (defined(pickedObject) && defined(pickedObject.id)) {
       const entity = pickedObject.id;
-      console.log(entity.properties.getValue());
+      console.log(entity.properties.getValue && entity.properties.getValue());
       console.log(`LEFT_CLICK: ${entity.name} (ID: ${entity.id})`);
     }
   }, ScreenSpaceEventType.LEFT_CLICK);

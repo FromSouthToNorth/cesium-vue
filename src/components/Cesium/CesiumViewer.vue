@@ -133,7 +133,7 @@ onMounted(() => {
     shouldAnimate: true, // Enable animations
     terrain: Terrain.fromWorldTerrain({
       requestWaterMask: true, // 启用水面效果
-      requestVertexNormals: true // 启用地形法线以支持光照
+      requestVertexNormals: true, // 启用地形法线以支持光照
     }),
     // globe: false, // 关闭默认地球
     // geocoder: IonGeocodeProviderType.GOOGLE, // 使用 Google 地理编码器
@@ -145,6 +145,7 @@ onMounted(() => {
 
   scene.screenSpaceCameraController.enableCollisionDetection = false;
 
+
   // globe.translucency.frontFaceAlphaByDistance = new NearFarScalar(
   //     400.0,
   //     0.0,
@@ -153,19 +154,19 @@ onMounted(() => {
   // );
   // globe.translucency.enabled = true;
   // globe.translucency.frontFaceAlphaByDistance.nearValue = 0.5;
-  const position = Cartesian3.fromDegrees(104.0633, 30.6597);
-
-  const resource = IonResource.fromAssetId(3565717)
-      .then(e => {
-        viewer.entities.add({
-          model: {
-            uri: e,
-            minimumPixelSize: 14,
-            maximumScale: 200,
-          },
-          position,
-        });
-      });
+  // const position = Cartesian3.fromDegrees(104.0633, 30.6597);
+  //
+  // const resource = IonResource.fromAssetId(3565717)
+  //     .then(e => {
+  //       viewer.entities.add({
+  //         model: {
+  //           uri: e,
+  //           minimumPixelSize: 14,
+  //           maximumScale: 200,
+  //         },
+  //         position,
+  //       });
+  //     });
 
   const tileset = createOsmBuildingsAsync()
       .then((layer) => {
@@ -216,15 +217,29 @@ onMounted(() => {
 
   terrain.readyEvent.addEventListener((terr) => {
     console.log('地形加载完成！', terr);
+    const pos = Cartesian3.fromDegrees(113.3532063, 37.8781213, 939.61);
+    // 创建 modelMatrix，将模型定位到指定坐标
+    // 定义旋转角度（90度，围绕 Z 轴，航向角）
+   const heading = CesiumMath.toRadians(89.6); // 旋转 86 度
+   const pitch = CesiumMath.toRadians(0);   // 俯仰角
+   const roll = CesiumMath.toRadians(0);    // 翻滚角
+   const hpr = new HeadingPitchRoll(heading, pitch, roll);
+    const modelMatrix = Transforms.headingPitchRollToFixedFrame(pos, hpr);
+
+    CesiumModel.fromGltfAsync({
+      url: '/src/assets/models/Lane.glb',
+      modelMatrix,
+    })
+        .then(model => {
+          scene.primitives.add(model);
+        });
     const bbox = bboxPolygon(turfBbox(LineString));
     const { coordinates } = bbox.geometry;
     const positions = coordinates[0].map(e => {
       return Cartesian3.fromDegrees(e[0], e[1], 1000);
     });
     let clippingPolygonEnabled = true;
-    const viewModel = {
-      clippingPlanesEnabled: true,
-    };
+
     const polygon = new ClippingPolygon({ positions });
     const clippingPolygons = new ClippingPolygonCollection({
       polygons: [polygon],
@@ -234,9 +249,10 @@ onMounted(() => {
 
     geoJSONLoad(pointGeoJSON, { clampToGround: false });
     // geoJSONLoad(PolygonGeoJSON)
-    geoJSONLoad(LineString, { clampToGround: false }, (dataSource) => {
+    geoJSONLoad(LineString, { clampToGround: false, strokeWidth: 2 }, (dataSource) => {
       viewer.flyTo(dataSource.entities.values, {
         duration: 2.0,
+
       });
     });
     geoJSONLoad(PointGeoJSON, {

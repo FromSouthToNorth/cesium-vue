@@ -1,6 +1,6 @@
 <template>
   <div id="cesiumContainer">
-    <Control/>
+<!--    <Control/>-->
     <Info/>
   </div>
 </template>
@@ -45,6 +45,7 @@ import {
   VelocityOrientationProperty,
   PolylineGlowMaterialProperty,
 } from 'cesium';
+import CesiumNavigation from 'cesium-navigation-es6';
 import { randomPolygon, randomLineString, randomPoint, bbox as turfBbox, bboxPolygon, centroid } from '@turf/turf';
 import { getCenterOfMass } from '@/utils/geo';
 import { addParabolaToScene, cesiumFlyTo, cluster, createCircleWave, createIconMarker } from '@/utils/cesium';
@@ -138,6 +139,11 @@ onMounted(() => {
     // globe: false, // 关闭默认地球
     // geocoder: IonGeocodeProviderType.GOOGLE, // 使用 Google 地理编码器
   });
+  const options = {
+    enableCompass: true,
+    enableZoomControls: true,//是否启用缩放控件
+  };
+  new CesiumNavigation(viewer, options);
   cesiumStore.setViewer(viewer);
 
   const scene = viewer.scene;
@@ -220,10 +226,10 @@ onMounted(() => {
     const pos = Cartesian3.fromDegrees(113.3532063, 37.8781213, 939.61);
     // 创建 modelMatrix，将模型定位到指定坐标
     // 定义旋转角度（90度，围绕 Z 轴，航向角）
-   const heading = CesiumMath.toRadians(89.6); // 旋转 86 度
-   const pitch = CesiumMath.toRadians(0);   // 俯仰角
-   const roll = CesiumMath.toRadians(0);    // 翻滚角
-   const hpr = new HeadingPitchRoll(heading, pitch, roll);
+    const heading = CesiumMath.toRadians(89.6); // 旋转 86 度
+    const pitch = CesiumMath.toRadians(0);   // 俯仰角
+    const roll = CesiumMath.toRadians(0);    // 翻滚角
+    const hpr = new HeadingPitchRoll(heading, pitch, roll);
     const modelMatrix = Transforms.headingPitchRollToFixedFrame(pos, hpr);
 
     CesiumModel.fromGltfAsync({
@@ -348,7 +354,7 @@ onMounted(() => {
     },
   });
 
-  viewer.trackedEntity = entity
+  viewer.trackedEntity = entity;
 
   viewer.homeButton.viewModel.command.afterExecute.addEventListener(() => cesiumFlyTo(pointGeoJSON.geometry.coordinates));
 

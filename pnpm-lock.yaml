@@ -14,6 +14,9 @@ importers:
       cesium:
         specifier: ^1.131.0
         version: 1.131.0
+      cesium-navigation-es6:
+        specifier: ^3.0.9
+        version: 3.0.9
       lodash-es:
         specifier: ^4.17.21
         version: 4.17.21
@@ -798,6 +801,9 @@ packages:
 
   bitmap-sdf@1.0.4:
     resolution: {integrity: sha512-1G3U4n5JE6RAiALMxu0p1XmeZkTeCwGKykzsLTCqVzfSDaN6S7fKnkIkfejogz+iwqBWc0UYAIKnKHNN7pSfDg==}
+
+  cesium-navigation-es6@3.0.9:
+    resolution: {integrity: sha512-tRMABMc4Le6fMxPvlC+pw6UyP7pm7tG1QrwRepIGzoRQDqO9o6f0SOt1zdbghDn8blY2u8sNWInfs5RaQ/+VEA==}
 
   cesium@1.131.0:
     resolution: {integrity: sha512-4OVlpds2TR6elsHLfVAp5FOqxjNbvKA7Ff5n3yuwDBFKgYgc6JErbpBSjY31pBI2ZJSWhKLknCNjrTR8FlVTFg==}
@@ -2658,6 +2664,10 @@ snapshots:
   birpc@2.5.0: {}
 
   bitmap-sdf@1.0.4: {}
+
+  cesium-navigation-es6@3.0.9:
+    dependencies:
+      cesium: 1.131.0
 
   cesium@1.131.0:
     dependencies:

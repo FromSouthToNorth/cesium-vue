@@ -1,7 +1,7 @@
 <template>
   <div id="cesiumContainer">
-<!--    <Control/>-->
-    <Info/>
+    <!--    <Control/>-->
+    <Info />
   </div>
 </template>
 
@@ -86,18 +86,18 @@ const points = {
       'coordinates': [113.351826667, 37.872431263],
     },
   },
-    {
-      'id': 'Point_C',
-      'type': 'Feature',
-      'properties': {
-        'name': '山西保安煤业',
-        'label': '山西保安煤业',
-      },
-      'geometry': {
-        'type': 'Point',
-        'coordinates': [113.353704214, 37.874336792],
-      },
-    }],
+  {
+    'id': 'Point_C',
+    'type': 'Feature',
+    'properties': {
+      'name': '山西保安煤业',
+      'label': '山西保安煤业',
+    },
+    'geometry': {
+      'type': 'Point',
+      'coordinates': [113.353704214, 37.874336792],
+    },
+  }],
 };
 
 const PolygonGeoJSON = {
@@ -175,9 +175,9 @@ onMounted(() => {
   //     });
 
   const tileset = createOsmBuildingsAsync()
-      .then((layer) => {
-        scene.primitives.add(layer);
-      });
+    .then((layer) => {
+      scene.primitives.add(layer);
+    });
 
   // 启用调试模式以查看性能
   scene.debugShowFramesPerSecond = true;
@@ -213,12 +213,12 @@ onMounted(() => {
       extrudedHeight: 0,
     }, options);
     GeoJsonDataSource.load(geojson, _options)
-        .then(function(dataSource) {
-          viewer.dataSources.add(dataSource)
-              .then(e => {
-                callback && callback(e);
-              });
-        });
+      .then(function (dataSource) {
+        viewer.dataSources.add(dataSource)
+          .then(e => {
+            callback && callback(e);
+          });
+      });
   }
 
   terrain.readyEvent.addEventListener((terr) => {
@@ -236,9 +236,9 @@ onMounted(() => {
       url: '/src/assets/models/Lane.glb',
       modelMatrix,
     })
-        .then(model => {
-          scene.primitives.add(model);
-        });
+      .then(model => {
+        scene.primitives.add(model);
+      });
     const bbox = bboxPolygon(turfBbox(LineString));
     const { coordinates } = bbox.geometry;
     const positions = coordinates[0].map(e => {
@@ -279,11 +279,11 @@ onMounted(() => {
         addParabolaToScene(viewer, pointGeoJSON.geometry.coordinates, pos, {}, terr);
       });
       sampleTerrainMostDetailed(terr, positions)
-          .then((result) => {
-            result.forEach(e => {
-              createCircleWave(viewer, [CesiumMath.toDegrees(e.longitude), CesiumMath.toDegrees(e.latitude), e.height], {});
-            });
+        .then((result) => {
+          result.forEach(e => {
+            createCircleWave(viewer, [CesiumMath.toDegrees(e.longitude), CesiumMath.toDegrees(e.latitude), e.height], {});
           });
+        });
     });
 
     // geoJSONLoad(ADLineString, { clampToGround: false, stroke: CesiumColor.BLUE, strokeWidth: 12 });
@@ -322,46 +322,46 @@ onMounted(() => {
       },
     });
   }
-  const entity = viewer.entities.add({
-    //Set the entity availability to the same interval as the simulation time.
-    availability: new TimeIntervalCollection([
-      new TimeInterval({
-        start,
-        stop,
-      }),
-    ]),
+  // const entity = viewer.entities.add({
+  //   //Set the entity availability to the same interval as the simulation time.
+  //   availability: new TimeIntervalCollection([
+  //     new TimeInterval({
+  //       start,
+  //       stop,
+  //     }),
+  //   ]),
 
-    //Use our computed positions
-    position: property,
+  //   //Use our computed positions
+  //   position: property,
 
-    //Automatically compute orientation based on position movement.
-    orientation: new VelocityOrientationProperty(property),
+  //   //Automatically compute orientation based on position movement.
+  //   orientation: new VelocityOrientationProperty(property),
 
-    //Load the Cesium plane model to represent the entity
-    model: {
-      uri: '/src/assets/models/GroundVehicle.glb',
-      minimumPixelSize: 32,
-    },
+  //   //Load the Cesium plane model to represent the entity
+  //   model: {
+  //     uri: '/src/assets/models/GroundVehicle.glb',
+  //     minimumPixelSize: 32,
+  //   },
 
-    //Show the path as a pink line sampled in 1 second increments.
-    path: {
-      resolution: 1,
-      material: new PolylineGlowMaterialProperty({
-        glowPower: 0.1,
-        color: CesiumColor.YELLOW,
-      }),
-      width: 12,
-    },
-  });
+  //   //Show the path as a pink line sampled in 1 second increments.
+  //   path: {
+  //     resolution: 1,
+  //     material: new PolylineGlowMaterialProperty({
+  //       glowPower: 0.1,
+  //       color: CesiumColor.YELLOW,
+  //     }),
+  //     width: 12,
+  //   },
+  // });
 
-  viewer.trackedEntity = entity;
+  // viewer.trackedEntity = entity;
 
   viewer.homeButton.viewModel.command.afterExecute.addEventListener(() => cesiumFlyTo(pointGeoJSON.geometry.coordinates));
 
   const handler = new ScreenSpaceEventHandler(scene.canvas);
 
   // 点击事件
-  handler.setInputAction(function(movement) {
+  handler.setInputAction(function (movement) {
     const pickedObject = scene.pick(movement.position);
     if (defined(pickedObject) && defined(pickedObject.id)) {
       const entity = pickedObject.id;

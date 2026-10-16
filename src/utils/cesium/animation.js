@@ -26,20 +26,20 @@ function CircleWaveMaterialProperty(options) {
 
 Object.defineProperties(CircleWaveMaterialProperty.prototype, {
   isConstant: {
-    get: function() {
+    get: function () {
       return false;
     },
   },
   definitionChanged: {
-    get: function() {
+    get: function () {
       return this._definitionChanged;
     },
   },
   color: {
-    get: function() {
+    get: function () {
       return this._color;
     },
-    set: function(value) {
+    set: function (value) {
       if (!CesiumColor.equals(this._color, value)) {
         this._color = CesiumColor.clone(value, this._color);
         this._definitionChanged.raiseEvent(this);
@@ -47,10 +47,10 @@ Object.defineProperties(CircleWaveMaterialProperty.prototype, {
     },
   },
   duration: {
-    get: function() {
+    get: function () {
       return this._duration;
     },
-    set: function(value) {
+    set: function (value) {
       if (this._duration !== value) {
         this._duration = value;
         this._definitionChanged.raiseEvent(this);
@@ -58,10 +58,10 @@ Object.defineProperties(CircleWaveMaterialProperty.prototype, {
     },
   },
   count: {
-    get: function() {
+    get: function () {
       return this._count;
     },
-    set: function(value) {
+    set: function (value) {
       if (this._count !== value) {
         this._count = value > 0 ? value : 1;
         this._definitionChanged.raiseEvent(this);
@@ -69,10 +69,10 @@ Object.defineProperties(CircleWaveMaterialProperty.prototype, {
     },
   },
   gradient: {
-    get: function() {
+    get: function () {
       return this._gradient;
     },
-    set: function(value) {
+    set: function (value) {
       if (this._gradient !== value) {
         this._gradient = Math.max(0, Math.min(1, value));
         this._definitionChanged.raiseEvent(this);
@@ -81,11 +81,11 @@ Object.defineProperties(CircleWaveMaterialProperty.prototype, {
   },
 });
 
-CircleWaveMaterialProperty.prototype.getType = function() {
+CircleWaveMaterialProperty.prototype.getType = function () {
   return 'CircleWaveMaterial';
 };
 
-CircleWaveMaterialProperty.prototype.getValue = function(time, result) {
+CircleWaveMaterialProperty.prototype.getValue = function (time, result) {
   if (!defined(result)) {
     result = {};
   }
@@ -96,7 +96,7 @@ CircleWaveMaterialProperty.prototype.getValue = function(time, result) {
   return result;
 };
 
-CircleWaveMaterialProperty.prototype.equals = function(other) {
+CircleWaveMaterialProperty.prototype.equals = function (other) {
   return this === other || (
     other instanceof CircleWaveMaterialProperty &&
     CesiumColor.equals(this._color, other._color) &&
@@ -149,7 +149,7 @@ Material._materialCache.addMaterial('CircleWaveMaterial', {
                return material;
             }`,
   },
-  translucent: function() {
+  translucent: function () {
     return true;
   },
 });

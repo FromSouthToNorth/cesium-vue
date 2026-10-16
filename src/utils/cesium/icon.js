@@ -27,6 +27,7 @@ function getMarkerIcon(type) {
 export function createIconMarker(entity) {
   const obj = entity.properties.getValue();
   const iconURL = getMarkerIcon(obj.type);
+  console.log('iconURL: ', iconURL);
   if (iconURL) {
     const color = obj['marker-color'] ? CesiumColor.fromCssColorString(obj['marker-color']) : CesiumColor.WHITE;
     pinBuilder.fromUrl(iconURL, color, 32)
